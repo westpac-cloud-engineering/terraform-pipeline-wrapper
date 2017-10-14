@@ -66,7 +66,7 @@ class TerraformAPICalls():
                     "key": key,
                     "value": value,
                     "category": category,
-                    "hcl": sensitive,
+                    "hcl": hcl,
                     "sensitive": sensitive
                 }
             }
@@ -103,7 +103,7 @@ class TerraformAPICalls():
         with open(tfvars_location, 'r') as fp:
             variable_list = hcl.load(fp)
             for obj in variable_list:
-                self.AddWorkspaceVariable(workspace, obj, hcl.dumps(variable_list[obj]))
+                self.AddWorkspaceVariable(workspace, obj, hcl.dumps(variable_list[obj]),hcl="true")
 
     def LoadLocalAzureCredentials(self, workspace):
         self.AddWorkspaceVariable(workspace, "ARM_CLIENT_ID", os.environ["ARM_CLIENT_ID"],category="env",
@@ -120,8 +120,8 @@ class TerraformAPICalls():
         request_uri = self.base_url + "/vars/" + variable_id
         return requests.delete(request_uri, headers=self.header)
 
-API_Calls = TerraformAPICalls(organization="westpac-v2")
-API_Calls.CreateWorkspace("dev2", "Westpac/tf-azure-core")
-API_Calls.LoadLocalAzureCredentials("dev2")
-API_Calls.LoadVariables("test.tfvars", "dev2")
 
+API_Calls = TerraformAPICalls(organization="westpac-v2")
+#API_Calls.CreateWorkspace("core-odev", "Westpac/tf-azure-core")
+API_Calls.LoadLocalAzureCredentials("core-odev")
+API_Calls.LoadVariables("test.tfvars", "core-odev")
