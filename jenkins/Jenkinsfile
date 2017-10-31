@@ -1,0 +1,53 @@
+node {
+
+    // Mark the code checkout 'Checkout'....
+    stage 'Get_Scripts'
+    sh 'echo "Getting Terraform Scripts"'
+
+    // // Checkout the Terraform API Calls
+    // git url: 'git@github.com:myorg/infrastructure.git'
+
+    // Mark the code build 'plan'....
+    stage name: 'Plan', concurrency: 1
+
+    // Creating Plan
+    // INSERT PLAN HERE
+    sh 'echo "Running Plan"'
+    
+    // Code = 0 No Changes, 1 = Failure, 2 = Changes to be applied
+    exitCode = "0"
+
+    // Skip approval step and auto app if 1
+    requiresApproval = "0"
+
+    if (exitCode == "0") {
+        sh 'echo "Test Success"'
+        currentBuild.result = 'SUCCESS'
+    }
+    if (exitCode == "1") {
+        currentBuild.result = 'FAILURE'
+    }
+    if (exitCode == "2") {
+        try {
+            input message: 'Apply Plan?', ok: 'Apply'
+            apply = true
+        } catch (err) {
+
+            currentBuild.result = 'UNSTABLE'
+        }
+    }
+
+    if (apply) {
+        stage name: 'Apply', concurrency: 1
+        
+        // Insert exitcode apply here
+        applyExitCode = "0"
+
+
+        if (applyExitCode == "0") {
+            currentBuild.result = 'SUCCESS'
+        } else {
+            currentBuild.result = 'FAILURE'
+        }
+    }
+}
