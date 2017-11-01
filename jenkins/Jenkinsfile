@@ -12,11 +12,10 @@ stage('Get_Scripts'){
 
         // Creating Plan
         sh 'pip3 install -r terraform/requirements.txt'
-        sh "set +e; python3 terraform/apply_run.py \'${params.organisation}\' \'${params.app_id}\' \'${params.workspace_name}\' \'${params.atlas_token}\'; echo \$? &gt; status"
-        def exitCode = readFile('status').trim()
+        sh "set +e; python3 terraform/run_plan.py \'${params.organisation}\' \'${params.app_id}\' \'${params.workspace_name}\' \'${params.atlas_token}\'; echo \$? &gt; status"
         
         // Code = 0 No Changes, 1 = Failure, 2 = Changes to be applied
-        exitCode = "0"
+        def exitCode = readFile('status').trim()
 
         // Skip approval step and auto app if 1
         requiresApproval = "0"
@@ -43,6 +42,8 @@ if (!changes) {
 
 // Request Approval from ServiceNow
 input message:'Approve deployment?' 
+
+
 stage('Apply'){
     node {
         applyExitCode = "0"
