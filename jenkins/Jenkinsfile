@@ -21,6 +21,7 @@ stage('Get_Scripts'){
         if (exitCode == "0") {
             sh 'echo "Plan Success"'
             currentBuild.result = 'SUCCESS'
+            return
         }
         if (exitCode == "1") {
             currentBuild.result = 'FAILURE'
