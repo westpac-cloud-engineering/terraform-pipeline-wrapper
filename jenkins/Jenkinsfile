@@ -34,7 +34,7 @@ stage('Get_Scripts'){
 }
 
 // Return as Success if no changes
-if !changes {
+if (!changes) {
     return 
 }
 
