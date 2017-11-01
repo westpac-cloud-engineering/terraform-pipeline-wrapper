@@ -5,14 +5,15 @@ stage('Get_Scripts'){
         sh 'echo "Getting Terraform Scripts"'
 
         // // Checkout the Terraform API Calls
-        // git url: 'git@github.com:myorg/infrastructure.git'
+        git url: 'https://github.com/Westpac/tfscripts'
 
         // Mark the code build 'plan'....
         stage name: 'Plan', concurrency: 1
 
         // Creating Plan
-        // INSERT PLAN HERE
-        sh 'echo "Running Plan"'
+        sh 'pip3 install -r terraform/requirements.txt'
+        sh "set +e; python3 terraform/apply_run.py \'${params.organisation}\' \'${params.app_id}\' \'${params.workspace_name}\' \'${params.atlas_token}\'; echo \$? &gt; status"
+        def exitCode = readFile('status').trim()
         
         // Code = 0 No Changes, 1 = Failure, 2 = Changes to be applied
         exitCode = "0"

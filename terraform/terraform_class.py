@@ -1,18 +1,16 @@
 import json
 import os
 
-import consul
 import hcl
 import requests
 import time
 
+
 class TerraformAPICalls():
     base_url = "https://atlas.hashicorp.com/api/v2"
 
-    def __init__(self, organization, directory, app_id, atlas_token=None, base_api_url=None):
+    def __init__(self, organization, app_id, atlas_token=None, base_api_url=None):
 
-        # Get Token from Environment Variable if not passed.
-        atlas_token = os.environ["ATLAS_TOKEN"]
         self.header = {
             'Authorization': "Bearer " + atlas_token,
             'Content-Type': 'application/vnd.api+json'
@@ -20,54 +18,6 @@ class TerraformAPICalls():
 
         self.app_id = app_id
         self.organization = organization
-        self.directory = directory
-
-    def get_workspaces(self):
-        workspaces_url = self.base_url + "/organizations/" + self.organization + "/workspaces"
-        return requests.get(workspaces_url, headers=self.header)
-
-    def get_linkable_repo_id(self, repo_name):
-        linkable_repo_url = self.base_url + "/linkable-repos?filter[organization][username]=" + self.organization
-        r = requests.get(url=linkable_repo_url, headers=self.header).text
-
-        # Find the ID for the Repository that matches the repository name.
-        for obj in json.loads(r)['data']:
-            if obj["attributes"]["name"] == repo_name:
-                return obj["id"]
-
-    def get_workspace_id(self, workspace_name):
-        linkable_repo_url = self.base_url + "/organizations/" + self.organization + "/workspaces"
-        r = requests.get(url=linkable_repo_url, headers=self.header).text
-
-        # Find the ID for the Repository that matches the repository name.
-        for obj in json.loads(r)['data']:
-            if obj["attributes"]["name"] == workspace_name:
-                return obj["id"]
-
-    def create_workspace(self, workspace_title, repo_name, branch="master"):
-        repo_id = self.get_linkable_repo_id(repo_name)
-        workspaces_url = self.base_url + "/compound-workspaces"
-
-        # Build Request
-        data = {
-            "data": {
-                "type": "compound-workspaces",
-                "attributes": {
-                    "name": workspace_title,
-                    "working_directory": "",
-                    "linkable-repo-id": repo_id,
-                    "ingress-trigger-attributes": {
-                        "default-branch": "true",  # NOT CONFIGURABLE IN BETA. TO BE REPLACED WITH DEFAULT BRANCH
-                        "branch": branch,  # NOT CONFIGURABLE IN BETA. TO BE REPLACED WITH DEFAULT BRANCH
-                        "vcs_root_path": "",
-                        "ingress-submodules": "false",
-                    }
-                }
-            }
-        }
-
-        # Make Request
-        return requests.post(url=workspaces_url, data=json.dumps(data), headers=self.header)
 
     def add_workspace_variable(self, workspace, key, value, category="terraform", sensitive="false",
                                hcl="false", variable_id=None):
@@ -104,7 +54,7 @@ class TerraformAPICalls():
             print(data)
             return requests.patch(url=variable_url + "/" + variable_id, data=json.dumps(data), headers=self.header)
 
-    def load_variables(self, environment):
+    def load_variables(self, environment, directory):
         workspace_name = self.generate_workspace_name(environment)
         request_uri = self.base_url + "/vars?filter[organization][username]=" + self.organization + "&filter[workspace][name]=" + workspace_name
 
@@ -115,7 +65,7 @@ class TerraformAPICalls():
             if tfvar["attributes"]["category"] == "terraform":
                 self.delete_variable(tfvar["id"])
 
-        with open(self.directory + "/env/" + environment + ".tfvars", 'r') as fp:
+        with open(directory + "/env/" + environment + ".tfvars", 'r') as fp:
             variable_list = hcl.load(fp)
             for obj in variable_list:
                 self.add_workspace_variable(workspace_name, obj, hcl.dumps(variable_list[obj]), hcl="true")
@@ -137,29 +87,6 @@ class TerraformAPICalls():
     def delete_variable(self, variable_id):
         request_uri = self.base_url + "/vars/" + variable_id
         return requests.delete(request_uri, headers=self.header)
-
-    def generate_workspace_name(self, environment):
-        return (self.app_id + "-" + environment + "-" + self.app_name).replace(" ", "_")
-
-    def generate_workspaces(self, app_id, app_name, cost_centre, git_repository):
-        c = consul.Consul(host=os.environ["CONSUL_ADDRESS"])
-
-        # Write MetaFile to Consul
-        base_keypath = "apps/" + self.app_id + "/"
-
-        # Write MetaFile to Consul
-        c.kv.put(base_keypath + "app_id", app_id)
-        c.kv.put(base_keypath + "app_name", app_name)
-        c.kv.put(base_keypath + "cost_centre", cost_centre)
-        c.kv.put(base_keypath + "git_repository", git_repository)
-
-        # Generate Workspaces from Environment Section of Meta
-        for environment in self.environments:
-            workspace_name = self.generate_workspace_name(environment)
-
-            self.create_workspace(workspace_name, self.git_repository,
-                                  self.environments[environment])
-            c.kv.put(base_keypath + "workspaces/" + workspace_name, workspace_name)
 
     def get_run_status(self, run_id="run-jDDckmxjRA1rTXVx"):
         request_uri = self.base_url + "/runs/" + run_id
@@ -317,14 +244,3 @@ class TerraformAPICalls():
         else:  # Else Fail Run
             print("Apply Failed")
             exit(1)
-
-workplace = TerraformAPICalls(organization="westpac-v2", directory='C:\Repositories\Orchestration\Apps\A00001-Bamboo', app_id="XXX001")
-workspace_id = workplace.get_workspace_id("XXX001-odev-My_Test_Application")
-#run_id = workplace.create_run(workspace_id)
-apply = workplace.apply_run(workspace_id, "run-Z3obZbjZW29xERCz")
-
-
-# workplace.discard_untriggered_plans(workspace_id)
-
-# API_Calls.LoadLocalAzureCredentials("core-odev")
-# API_Calls.LoadVariables("test.tfvars", "core-odev")
