@@ -1,3 +1,5 @@
+changes = false 
+
 stage('Get_Scripts'){
     node {
         sh 'echo "Getting Terraform Scripts"'
@@ -21,12 +23,19 @@ stage('Get_Scripts'){
         if (exitCode == "0") {
             sh 'echo "Plan Success"'
             currentBuild.result = 'SUCCESS'
-            return
         }
-        if (exitCode == "1") {
+        else if (exitCode == "1") {
             currentBuild.result = 'FAILURE'
         }
+        else {
+            changes = True
+        }
     }
+}
+
+// Return as Success if no changes
+if !changes {
+    return 
 }
 
 // RAISE CHANGE REQUEST TO SERVICENOW HERE
