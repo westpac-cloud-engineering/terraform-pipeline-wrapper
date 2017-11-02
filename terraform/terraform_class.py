@@ -231,6 +231,8 @@ class TerraformAPICalls():
         print("Applying Job: " + run_id)
         return_data = requests.post(request_uri, headers=self.header, data=json.dumps(data))
 
+        log_read_url = json.loads(return_data.text)['data']['attributes']['log-read-url']
+
         if str(return_data.status_code).startswith("2"):
 
             # Keep Checking until planning phase has finished
@@ -242,6 +244,10 @@ class TerraformAPICalls():
                 request = json.loads(requests.get(self.base_url + "/runs/" + run_id, headers=self.header).text)
 
                 status = request['data']['attributes']['status']
+
+            # Get Log File
+            print("Log File Directory:" + log_read_url)
+            print(requests.get(log_read_url, headers=self.header).text)
 
             # If Plan Failed
             if status == "errored":
