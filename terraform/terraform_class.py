@@ -197,7 +197,7 @@ class TerraformAPICalls():
 
                 print("Changes Detected")
                 with open('data.json', 'w') as f:
-                    json.dump({"status":"changes", "run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
+                    json.dump({"status":"changed", "run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
 
             exit(0)
 
