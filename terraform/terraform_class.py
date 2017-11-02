@@ -54,6 +54,15 @@ class TerraformAPICalls():
             print(data)
             return requests.patch(url=variable_url + "/" + variable_id, data=json.dumps(data), headers=self.header)
 
+    def get_workspace_id(self, workspace_name):
+        linkable_repo_url = self.base_url + "/organizations/" + self.organization + "/workspaces"
+        r = requests.get(url=linkable_repo_url, headers=self.header).text
+
+        # Find the ID for the Repository that matches the repository name.
+        for obj in json.loads(r)['data']:
+            if obj["attributes"]["name"] == workspace_name:
+                return obj["id"]
+
     def load_variables(self, environment, directory):
         workspace_name = self.generate_workspace_name(environment)
         request_uri = self.base_url + "/vars?filter[organization][username]=" + self.organization + "&filter[workspace][name]=" + workspace_name
