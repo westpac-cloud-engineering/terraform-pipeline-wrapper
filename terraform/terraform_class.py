@@ -230,6 +230,7 @@ class TerraformAPICalls():
 
         print("Applying Job: " + run_id)
         return_data = requests.post(request_uri, headers=self.header, data=json.dumps(data))
+        print(json.loads(return_data.text))
 
         log_read_url = json.loads(return_data.text)['data']['attributes']['log-read-url']
 
