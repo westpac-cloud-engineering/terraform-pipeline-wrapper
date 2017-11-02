@@ -230,9 +230,9 @@ class TerraformAPICalls():
 
         print("Applying Job: " + run_id)
         return_data = requests.post(request_uri, headers=self.header, data=json.dumps(data))
-        print(json.loads(return_data.text))
 
-        log_read_url = json.loads(return_data.text)['data']['attributes']['log-read-url']
+        # Url endpoint not available
+        #log_read_url = json.loads(return_data.text)['data']['attributes']['log-read-url']
 
         if str(return_data.status_code).startswith("2"):
 
@@ -247,8 +247,8 @@ class TerraformAPICalls():
                 status = request['data']['attributes']['status']
 
             # Get Log File
-            print("Log File Directory:" + log_read_url)
-            print(requests.get(log_read_url, headers=self.header).text)
+            # print("Log File Directory:" + log_read_url)
+            # print(requests.get(log_read_url, headers=self.header).text)
 
             # If Plan Failed
             if status == "errored":
