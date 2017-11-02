@@ -9,7 +9,7 @@ p.add_argument('run_id')
 p.add_argument('destroy')
 p.add_argument('atlas_token')
 
-def main(organisation, app_id, workspace_name, atlas_token, run_id, destroy=False):
+def main(organisation, app_id, workspace_name, run_id, atlas_token, destroy=False):
     api = tf.TerraformAPICalls(organization=organisation,  app_id=app_id, atlas_token=atlas_token)
     workspace_id = api.get_workspace_id(workspace_name)
     return api.apply_run(workspace_id, run_id=run_id, destroy=destroy)
