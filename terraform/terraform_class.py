@@ -245,15 +245,18 @@ class TerraformAPICalls():
 
             # If Plan Failed
             if status == "errored":
-                print("Job Status: Failed")
-                print("Job Output TBA")
-                exit(1)
+                with open('data.json', 'w') as f:
+                    json.dump({"status": "failed"}, f,
+                              ensure_ascii=False)
 
             # If Plan Succeeded, Check for Changes
             elif status == "applied":
-                print("Job Status: Applied Successfully!")
-                exit(0)
+                with open('data.json', 'w') as f:
+                    json.dump({"status": "applied"}, f,
+                              ensure_ascii=False)
 
         else:  # Else Fail Run
             print("Apply Failed")
-            exit(1)
+            with open('data.json', 'w') as f:
+                json.dump({"status": "failed"}, f,
+                          ensure_ascii=False)
