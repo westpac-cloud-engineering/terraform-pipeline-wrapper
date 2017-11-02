@@ -1,4 +1,4 @@
-import terraform.terraform_class as tf
+import terraform_class as tf
 import argparse
 
 p = argparse.ArgumentParser()
