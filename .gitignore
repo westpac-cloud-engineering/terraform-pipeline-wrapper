@@ -150,4 +150,4 @@ ENV/
 # mypy
 .mypy_cache/
 
-data.txt
+data.json

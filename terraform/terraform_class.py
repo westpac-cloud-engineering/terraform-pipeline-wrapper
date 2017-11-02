@@ -191,12 +191,12 @@ class TerraformAPICalls():
             elif status == "planned":
                 if not changes_detected:
                     print("No Changes Detected")
-                    with open('data.txt', 'w') as f:
+                    with open('data.json', 'w') as f:
                         json.dump({"status": "unchanged", "run_id": json.loads(return_data.text)['data']['id']}, f,
                                   ensure_ascii=False)
 
                 print("Changes Detected")
-                with open('data.txt', 'w') as f:
+                with open('data.json', 'w') as f:
                     json.dump({"status":"changes", "run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
 
             exit(0)
@@ -204,7 +204,7 @@ class TerraformAPICalls():
         else:  # Else Fail Run
             print("Plan Failed: " + json.loads(return_data.text)["data"]["attributes"]["message"])
 
-            with open('data.txt', 'w') as f:
+            with open('data.json', 'w') as f:
                 json.dump({"status": "failed", "run_id": json.loads(return_data.text)['data']['id']}, f,
                           ensure_ascii=False)
 
