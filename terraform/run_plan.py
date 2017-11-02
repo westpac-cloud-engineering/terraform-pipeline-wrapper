@@ -14,5 +14,4 @@ def main(organisation, app_id, workspace_name, atlas_token, destroy=False):
 
 if __name__ == "__main__":
     args = p.parse_args()
-    print(args)
     main(args.organisation, args.app_id, args.workspace_name, args.atlas_token)

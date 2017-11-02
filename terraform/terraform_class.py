@@ -191,18 +191,22 @@ class TerraformAPICalls():
             elif status == "planned":
                 if not changes_detected:
                     print("No Changes Detected")
-                    exit(0)  # Exit if no changes
+                    with open('data.txt', 'w') as f:
+                        json.dump({"status": "unchanged", "run_id": json.loads(return_data.text)['data']['id']}, f,
+                                  ensure_ascii=False)
 
                 print("Changes Detected")
                 with open('data.txt', 'w') as f:
-                    json.dump({"run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
-                exit(2)
+                    json.dump({"status":"changes", "run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
 
             exit(0)
 
         else:  # Else Fail Run
             print("Plan Failed: " + json.loads(return_data.text)["data"]["attributes"]["message"])
-            exit(1)
+
+            with open('data.txt', 'w') as f:
+                json.dump({"status": "failed", "run_id": json.loads(return_data.text)['data']['id']}, f,
+                          ensure_ascii=False)
 
     def apply_run(self, workplace_id, run_id, destroy=False):
         request_uri = self.base_url + "/runs/" + run_id + "/actions/apply"

@@ -10,9 +10,19 @@ stage('Get_Scripts'){
         // Mark the code build 'plan'....
         stage name: 'Plan', concurrency: 1
 
+        //Remove the terraform state file so we always start from a clean state
+        if (fileExists(".terraform/terraform.tfstate")) {
+            sh "rm -rf .terraform/terraform.tfstate"
+        }
+        
+        if (fileExists("status")) {
+            sh "rm status"
+        }
+
+
         // Creating Plan
-        sh 'pip3 install -r terraform/requirements.txt'
-        sh "set +e; python3 terraform/run_plan.py \'${params.organisation}\' \'${params.app_id}\' \'${params.workspace_name}\' \'${params.atlas_token}\'; echo \$? &gt; status"
+        sh ('pip3 install -r terraform/requirements.txt')
+        sh ("set +e; python3 terraform/run_plan.py \'${params.organisation}\' \'${params.app_id}\' \'${params.workspace_name}\' \'${params.atlas_token}\'; echo \$? >> status")
         
         // Code = 0 No Changes, 1 = Failure, 2 = Changes to be applied
         def exitCode = readFile('status').trim()
