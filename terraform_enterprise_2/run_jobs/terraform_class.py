@@ -194,7 +194,7 @@ class TerraformAPICalls():
                     with open('data.json', 'w') as f:
                         json.dump({"status":"changed", "run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
 
-               else:
+                else:
                     print("No Changes Detected")
                     with open('data.json', 'w') as f:
                         json.dump({"status": "unchanged", "run_id": json.loads(return_data.text)['data']['id']}, f,
