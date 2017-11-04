@@ -189,15 +189,17 @@ class TerraformAPICalls():
 
             # If Plan Succeeded, Check for Changes
             elif status == "planned":
-                if not changes_detected:
+                if changes_detected:
+                    print("Changes Detected")
+                    with open('data.json', 'w') as f:
+                        json.dump({"status":"changed", "run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
+
+               else:
                     print("No Changes Detected")
                     with open('data.json', 'w') as f:
                         json.dump({"status": "unchanged", "run_id": json.loads(return_data.text)['data']['id']}, f,
                                   ensure_ascii=False)
-
-                print("Changes Detected")
-                with open('data.json', 'w') as f:
-                    json.dump({"status":"changed", "run_id": json.loads(return_data.text)['data']['id']}, f, ensure_ascii=False)
+ 
 
             exit(0)
 
