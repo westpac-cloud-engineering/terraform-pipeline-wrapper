@@ -234,14 +234,14 @@ class TerraformAPICalls():
         return_data = requests.post(request_uri, headers=self.header, data=json.dumps(data))
 
         # Url endpoint not available
-        #log_read_url = json.loads(return_data.text)['data']['attributes']['log-read-url']
+        # log_read_url = json.loads(return_data.text)['data']['attributes']['log-read-url']
 
         if str(return_data.status_code).startswith("2"):
 
             # Keep Checking until planning phase has finished
             status = "applying"
             while status == "applying" or status == "queued":
-                print("Job Status: applying changes")
+                print("Job Status: Applying changes")
                 time.sleep(5)
 
                 request = json.loads(requests.get(self.base_url + "/runs/" + run_id, headers=self.header).text)
@@ -267,5 +267,5 @@ class TerraformAPICalls():
         else:  # Else Fail Run
             print("Apply Failed")
             with open('data.json', 'w') as f:
-                json.dump({"status": "failed"}, f,
+                json.dump({"status": "errored"}, f,
                           ensure_ascii=False)
