@@ -38,7 +38,7 @@ class ApplicationArchetype:
 
         # Create Keys
         jenkins_component_key = "/job/" + self.app_id + "/job/" + component_pipelines_name
-        pipelines_key = self.app_base_key + "/pipelines/" + component_pipelines_name
+        pipelines_key = self.app_base_key + "/pipelines/" + component_pipelines_name + "/"
 
         # Create Jenkins Application Folder
         jenkins_calls = JenkinsCalls(base_url="jenkins.wbc-cloud-poc.com", username=os.environ['JENKINS_USERNAME'],
@@ -56,6 +56,7 @@ class ApplicationArchetype:
 
         # Create Pipelines
         for env in environments:
+
             # Create Jenkins Pipeline
             jenkins_job_name = jenkins_calls.create_jenkins_pipeline_job(self.app_id,
                                                                          component_pipelines_name,
@@ -65,14 +66,17 @@ class ApplicationArchetype:
             # Create Terraform Pipeline
             terraform_job_name = "stub"
 
+
+
             # Create Keys
             kvs = {
-                pipelines_key + env['env'] + "/git_branch": "env/" + env,
-                pipelines_key + env['env'] + "/jenkins_job_url": jenkins_job_name,
-                pipelines_key + env['env'] + "/tf_tenant": env['tf_tenant'],
-                pipelines_key + env['env'] + "/tf_workspace": terraform_job_name,
-                pipelines_key + env['env'] + "/production_flag": env['production_flag']
+                pipelines_key + env + "/git_branch": "env/" + env,
+                pipelines_key + env + "/jenkins_job_url": jenkins_job_name,
+                pipelines_key + env + "/tf_tenant": environments[env]['tf_tenant'],
+                pipelines_key + env + "/tf_workspace": terraform_job_name,
+                pipelines_key + env + "/production_flag": str(environments[env]['production_flag'])
             }
+
             self.create_consul_keys(kvs)
 
 
@@ -98,7 +102,7 @@ class JenkinsCalls:
         # Generate Template
         template = Environment(loader=PackageLoader('create_project', 'jenkins_jobs')).get_template('terraform_default.xml')
         pipeline_info = {
-            "displayName": app_id + ": " + component_pipelines_name + " - " + environment,
+            "displayName": "Deployment: " + environment,
             "app_id": app_id
         }
 
