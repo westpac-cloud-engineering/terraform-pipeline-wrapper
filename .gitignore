@@ -150,4 +150,4 @@ ENV/
 # mypy
 .mypy_cache/
 
-create_project/data.json
+data.json

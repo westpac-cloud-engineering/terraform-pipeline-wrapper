@@ -1,2 +1,4 @@
 python-consul
 python-jenkins
+requests
+jinja2
