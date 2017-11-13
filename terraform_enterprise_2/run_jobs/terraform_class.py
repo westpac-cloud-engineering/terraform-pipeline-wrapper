@@ -198,6 +198,8 @@ class TerraformAPICalls():
                 if status == "planning":
                     planning = True
 
+            print("changes detected: " + changes_detected)
+
             # If Plan Failed
             if status == "errored":
                 print("Job Status: Failed")
