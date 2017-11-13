@@ -244,7 +244,7 @@ class TerraformAPICalls():
                     "workspace": {
                         "data": {
                             "type": "workspaces",
-                            "id": self.workplace_id
+                            "id": self.workspace_id
                         }
                     }
                 },

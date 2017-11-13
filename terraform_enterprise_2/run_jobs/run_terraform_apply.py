@@ -6,8 +6,8 @@ p = argparse.ArgumentParser()
 p.add_argument('app_id')
 p.add_argument('component_name')
 p.add_argument('environment')
-p.add_argument('destroy')
 p.add_argument('run_id')
+p.add_argument('destroy')
 
 def main(app_id, component_name, environment, run_id, destroy=False):
     # Get Build Information
@@ -26,8 +26,8 @@ def main(app_id, component_name, environment, run_id, destroy=False):
         component_name=component_name,
         workspace_name=build_information["tf_workspace"],
         organisation=build_information["organisation"],
-        environment="environment",
         repository=build_information["git_repository"],
+        environment=environment,
         secrets=secrets
     )
 
