@@ -89,7 +89,7 @@ class TerraformAPICalls():
                 self.add_workspace_variable(obj, self.secrets["workspace_variables"][obj], category="env", hcl=False, sensitive=True)
 
     def load_app_variables(self, directory):
-        with open(directory + "/env/" + self.environment + ".tfvars", 'r') as fp:
+        with open(directory + "env/" + self.environment + ".tfvars", 'r') as fp:
             variable_list = hcl.load(fp)
             for obj in variable_list:
                 self.add_workspace_variable(obj, hcl.dumps(variable_list[obj]), hcl=True)

@@ -9,7 +9,7 @@ p.add_argument('environment')
 p.add_argument('destroy')
 p.add_argument('run_id')
 
-def main(app_id, component_name, environment, destroy=False):
+def main(app_id, component_name, environment, run_id, destroy=False):
     # Get Build Information
     info = bf.BuildInformation(
         app_id=app_id,
@@ -35,4 +35,4 @@ def main(app_id, component_name, environment, destroy=False):
 
 if __name__ == "__main__":
     args = p.parse_args()
-    main(args.app_id, args.component_name, args.environment, args.destroy)
+    main(args.app_id, args.component_name, args.environment, args.run_id, args.destroy)
