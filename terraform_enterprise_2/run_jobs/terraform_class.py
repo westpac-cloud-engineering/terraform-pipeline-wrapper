@@ -89,6 +89,7 @@ class TerraformAPICalls():
     def load_app_variables(self, directory):
         url = "https://raw.githubusercontent.com/" + self.repository + "/env/" + self.environment + "/env/" + self.environment +".tfvars"
 
+        print("Getting Environment Variables from: " + url)
         variable_list = hcl.loads(requests.get(url).text)
         for obj in variable_list:
             self.add_workspace_variable(obj, hcl.dumps(variable_list[obj]), hcl=True)
