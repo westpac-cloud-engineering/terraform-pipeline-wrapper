@@ -31,7 +31,7 @@ def main(app_id, component_name, environment, run_id, destroy=False):
         secrets=secrets
     )
 
-    return api.create_run(destroy=destroy, run_id=run_id)
+    return api.apply_run(destroy=destroy, run_id=run_id)
 
 
 if __name__ == "__main__":
