@@ -228,8 +228,7 @@ class TerraformAPICalls():
 
     def apply_run(self, run_id, destroy=False):
 
-        # Untriggered plans must be discarded before creating a new one is queued.
-        self.discard_untriggered_plans()
+        # Reload secrets into Terraform.
         self.delete_variables()
         self.load_secrets()
         self.load_app_variables("")
