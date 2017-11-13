@@ -65,11 +65,14 @@ class ApplicationArchetype:
                 branch_name = "env/" + env['name']
 
                 # Create Jenkins Pipeline
-                if component['pipeline_type'] :
+                if component['pipeline_type'] == "jenkins" :
                     jenkins_job_name = jenkins_calls.create_jenkins_pipeline_job(
                         app_id=self.app_id,
                         component_pipelines_name=component["name"],
                         environment=env['name'],
+                        jf_branch="",
+                        jf_path="",
+                        jf_url="",
                         sub_key=jenkins_component_key
                     )
 
@@ -77,7 +80,7 @@ class ApplicationArchetype:
                 terraform_calls = terraform.TerraformAPICalls(
                     organization=self.get_consul_key("shared_services/terraform/" + env['terraform']['tf_tenant'] + "/organisation"),
                     app_id=self.app_id,
-                    component_name=env['name'],
+                    component_name=component["name"],
                     atlas_token=None,
                 )
 

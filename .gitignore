@@ -150,4 +150,5 @@ ENV/
 # mypy
 .mypy_cache/
 
+environment_variables.json
 data.json

@@ -8,13 +8,20 @@
         <hudson.model.ParametersDefinitionProperty>
             <parameterDefinitions>
                 <hudson.model.StringParameterDefinition>
-                    <name>application_id</name>
+                    <name>Application ID</name>
                     <description/>
                     <defaultValue>{{pipeline_info.app_id}}</defaultValue>
                 </hudson.model.StringParameterDefinition>
-                <hudson.model.BooleanParameterDefinition>
-                    <name>destroy_infrastructure</name>
+                <hudson.model.StringParameterDefinition>
+                    <name>Environment</name>
                     <description/>
+                    <defaultValue>dev</defaultValue>
+                </hudson.model.StringParameterDefinition>
+                <hudson.model.BooleanParameterDefinition>
+                    <name>Destroy Infrastructure Flag</name>
+                    <description>
+                        This flag will signal Terraform to destroy infrastructure rather than provision.
+                    </description>
                     <defaultValue>false</defaultValue>
                 </hudson.model.BooleanParameterDefinition>
             </parameterDefinitions>
@@ -29,22 +36,23 @@
             <userRemoteConfigs>
                 <hudson.plugins.git.UserRemoteConfig>
                     <url>
-                        https://github.com/Westpac/jenkins-pipeline-library
+                        {{pipeline_info.jenkinsfile_url}}
                     </url>
                 </hudson.plugins.git.UserRemoteConfig>
             </userRemoteConfigs>
             <branches>
                 <hudson.plugins.git.BranchSpec>
-                    <name>*/master</name>
+                    <name>{{pipeline_info.jenkinsfile_branch}}</name>
                 </hudson.plugins.git.BranchSpec>
             </branches>
             <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
             <submoduleCfg class="list"/>
             <extensions/>
         </scm>
-        <scriptPath>terraform-default/Jenkinsfile</scriptPath>
+        <scriptPath>{{pipeline_info.jenkinsfile_path}}</scriptPath>
         <lightweight>true</lightweight>
     </definition>
     <triggers/>
     <disabled>false</disabled>
 </flow-definition>
+

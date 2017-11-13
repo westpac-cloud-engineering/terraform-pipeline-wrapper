@@ -12,7 +12,7 @@ class JenkinsCalls:
 
         return dict(s.split(':') for s in [requests.get(url=url).text])
 
-    def create_jenkins_pipeline_job(self, app_id, component_pipelines_name, environment, sub_key=""):
+    def create_jenkins_pipeline_job(self, app_id, component_pipelines_name, environment, jf_path, jf_url, jf_branch="master", sub_key=""):
 
         # Generate request variables
         pipeline_full_name = app_id + "/" + component_pipelines_name + "/" + environment
@@ -24,7 +24,10 @@ class JenkinsCalls:
         template = j2.Environment(loader=j2.PackageLoader('create_project', 'jenkins_jobs')).get_template('terraform_default.xml')
         pipeline_info = {
             "displayName": "Deployment: " + environment,
-            "app_id": app_id
+            "app_id": app_id,
+            "jenkinsfile_path": "jenkinsfile_path",
+            "jenkinsfile_url": "jenkinsfile_url",
+            "jenkinsfile_branch": "jenkinsfile_branch",
         }
 
         # Create Jobs
