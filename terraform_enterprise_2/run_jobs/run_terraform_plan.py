@@ -25,6 +25,7 @@ def main(app_id, component_name, environment, destroy=False):
         component_name=component_name,
         workspace_name=build_information["tf_workspace"],
         organisation=build_information["organisation"],
+        repository=build_information["git_repository"],
         environment=environment,
         secrets=secrets
     )

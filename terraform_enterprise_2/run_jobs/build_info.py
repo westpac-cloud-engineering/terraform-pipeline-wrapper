@@ -14,7 +14,8 @@ class BuildInformation:
         self.app_id = app_id
 
         self.base_app_key = "apps/" + app_id + "/"
-        self.base_component_key = self.base_app_key + "/pipelines/" + component_name + "/" + environment + "/"
+        self.base_component_key = self.base_app_key + "/pipelines/" + component_name + "/"
+        self.base_environment_key = self.base_component_key + environment + "/"
 
     def get_consul_key(self, key):
         c = consul.Consul(host=self.consul_address)
@@ -24,10 +25,11 @@ class BuildInformation:
         build_information = {}
 
         # Get info from consul
-        build_information["tf_workspace"] = self.get_consul_key(self.base_component_key + "tf_workspace")
+        build_information["git_repository"] = self.get_consul_key(self.base_component_key + "git_repository")
+        build_information["tf_workspace"] = self.get_consul_key(self.base_environment_key + "tf_workspace")
         build_information["organisation"] = self.get_consul_key(
             "shared_services/terraform/" +
-            self.get_consul_key(self.base_component_key + "tf_tenant") +
+            self.get_consul_key(self.base_environment_key + "tf_tenant") +
             "/organisation"
         )
 

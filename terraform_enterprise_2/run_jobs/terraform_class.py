@@ -8,7 +8,7 @@ import build_info
 class TerraformAPICalls():
     base_url = "https://atlas.hashicorp.com/api/v2"
 
-    def __init__(self, organisation, app_id, component_name, workspace_name, environment, secrets, base_api_url=None):
+    def __init__(self, organisation, app_id, component_name, workspace_name, environment, repository, secrets, base_api_url=None):
         self.header = {
             'Authorization': "Bearer " + secrets["atlas_token"],
             'Content-Type': 'application/vnd.api+json'
@@ -20,12 +20,12 @@ class TerraformAPICalls():
         self.organisation = organisation
         self.secrets = secrets
         self.workspace_name = workspace_name
+        self.repository = repository
         self.workspace_id = self.get_workspace_id()
 
     def add_workspace_variable(self, key, value, category="terraform", sensitive=False,
                                hcl=False, variable_id=None):
         variable_url = self.base_url + "/vars"
-        print (variable_url)
         data = {
             "data": {
                 "type": "vars",
@@ -52,13 +52,11 @@ class TerraformAPICalls():
                 }
             }
 
-            print(data)
-            print(requests.post(url=variable_url, data=json.dumps(data), headers=self.header).status_code)
+            return (requests.post(url=variable_url, data=json.dumps(data), headers=self.header).status_code)
 
         # Else find the existing one using the variable ID
         else:
             data["data"]["id"] = variable_id
-            print(data)
             return requests.patch(url=variable_url + "/" + variable_id, data=json.dumps(data), headers=self.header)
 
     def get_workspace_id(self):
@@ -89,10 +87,11 @@ class TerraformAPICalls():
                 self.add_workspace_variable(obj, self.secrets["workspace_variables"][obj], category="env", hcl=False, sensitive=True)
 
     def load_app_variables(self, directory):
-        with open(directory + "env/" + self.environment + ".tfvars", 'r') as fp:
-            variable_list = hcl.load(fp)
-            for obj in variable_list:
-                self.add_workspace_variable(obj, hcl.dumps(variable_list[obj]), hcl=True)
+        url = "https://raw.githubusercontent.com/" + self.repository + "/env/" + self.environment + "/env/" + self.environment +".tfvars"
+
+        variable_list = hcl.loads(requests.get(url).text)
+        for obj in variable_list:
+            self.add_workspace_variable(obj, hcl.dumps(variable_list[obj]), hcl=True)
 
         self.add_workspace_variable("app_id", self.app_id, hcl=False)
 
@@ -295,3 +294,4 @@ class TerraformAPICalls():
             with open('data.json', 'w') as f:
                 json.dump({"status": "errored"}, f,
                           ensure_ascii=False)
+
