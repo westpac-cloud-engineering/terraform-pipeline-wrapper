@@ -260,7 +260,7 @@ class TerraformAPICalls():
         print(data)
 
         return_data = requests.post(request_uri, headers=self.header, data=json.dumps(data))
-
+        print (return_data.status_code)
         # Url endpoint not available
         # log_read_url = json.loads(return_data.text)['data']['attributes']['log-read-url']
 
