@@ -173,6 +173,8 @@ class TerraformAPICalls():
 
         print("Creating new Terraform run against: " + self.workspace_id)
 
+        self.delete_variables()
+
         # Check if run can be created Successfully
         if str(return_data.status_code).startswith("2"):
             print("New Run: " + json.loads(return_data.text)['data']['id'])
@@ -225,7 +227,14 @@ class TerraformAPICalls():
                 json.dump({"status": "failed", "run_id": json.loads(return_data.text)['data']['id']}, f,
                           ensure_ascii=False)
 
-    def apply_run(self, workplace_id, run_id, destroy=False):
+    def apply_run(self, run_id, destroy=False):
+
+        # Untriggered plans must be discarded before creating a new one is queued.
+        self.discard_untriggered_plans()
+        self.delete_variables()
+        self.load_secrets()
+        self.load_app_variables("")
+
         request_uri = self.base_url + "/runs/" + run_id + "/actions/apply"
 
         data = {
@@ -237,7 +246,7 @@ class TerraformAPICalls():
                     "workspace": {
                         "data": {
                             "type": "workspaces",
-                            "id": workplace_id
+                            "id": self.workplace_id
                         }
                     }
                 },
@@ -266,6 +275,8 @@ class TerraformAPICalls():
             # Get Log File
             # print("Log File Directory:" + log_read_url)
             # print(requests.get(log_read_url, headers=self.header).text)
+
+            self.delete_variables()
 
             # If Plan Failed
             if status == "errored":
