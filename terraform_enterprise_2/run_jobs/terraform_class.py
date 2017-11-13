@@ -77,7 +77,7 @@ class TerraformAPICalls():
         for tfvar in json.loads(data)["data"]:
             self.delete_variable(tfvar["id"])
 
-    def load_secrets(self):
+    def load_secrets(self, destroy=False):
         if "environment_variables" in self.secrets:
             for obj in self.secrets["environment_variables"]:
                 self.add_workspace_variable(obj, self.secrets["environment_variables"][obj], category="env", hcl=False, sensitive=True)
@@ -85,6 +85,10 @@ class TerraformAPICalls():
         if "workspace_variables" in self.secrets:
             for obj in self.secrets["workspace_variables"]:
                 self.add_workspace_variable(obj, self.secrets["workspace_variables"][obj], category="env", hcl=False, sensitive=True)
+
+        if destroy:
+            self.add_workspace_variable("CONFIRM_DESTROY", "1", category="env", hcl=False,
+                                        sensitive=True)
 
     def load_app_variables(self, directory):
         url = "https://raw.githubusercontent.com/" + self.repository + "/env/" + self.environment + "/env/" + self.environment +".tfvars"
@@ -146,7 +150,7 @@ class TerraformAPICalls():
         # Untriggered plans must be discarded before creating a new one is queued.
         self.discard_untriggered_plans()
         self.delete_variables()
-        self.load_secrets()
+        self.load_secrets(destroy)
         self.load_app_variables("")
 
 
@@ -233,7 +237,7 @@ class TerraformAPICalls():
 
         # Reload secrets into Terraform.
         self.delete_variables()
-        self.load_secrets()
+        self.load_secrets(destroy)
         self.load_app_variables("")
 
         request_uri = self.base_url + "/runs/" + run_id + "/actions/apply"
