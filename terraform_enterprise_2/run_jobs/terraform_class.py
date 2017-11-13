@@ -182,7 +182,7 @@ class TerraformAPICalls():
             # Keep Checking until planning phase has finished
             planning = True
             status = "planning"
-            changes_detected = False
+            changes_detected = None
             while planning:
                 planning = False
                 print("Job Status: Planning")
@@ -198,7 +198,7 @@ class TerraformAPICalls():
                 if status == "planning":
                     planning = True
 
-            print("changes detected: " + changes_detected)
+            print("changes detected: " + str(changes_detected))
 
             # If Plan Failed
             if status == "errored":
@@ -208,7 +208,7 @@ class TerraformAPICalls():
 
             # If Plan Succeeded, Check for Changes
             elif status == "planned":
-                if changes_detected:
+                if changes_detected == True:
                     print("Changes Detected")
                     with open('data.json', 'w') as f:
                         json.dump({'status': "changed", 'run_id': json.loads(return_data.text)['data']['id']}, f,
