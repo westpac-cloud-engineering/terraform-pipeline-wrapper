@@ -256,6 +256,9 @@ class TerraformAPICalls():
         }
 
         print("Applying Job: " + run_id)
+        print("Print URI: " + request_uri)
+        print(data)
+
         return_data = requests.post(request_uri, headers=self.header, data=json.dumps(data))
 
         # Url endpoint not available
