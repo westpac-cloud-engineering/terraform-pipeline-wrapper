@@ -49,7 +49,7 @@ class TerraformAPICalls():
         data = {
             "data": {
                 "type": "compound-workspaces",
-                "attributes": {
+                 "attributes": {
                     "name": workspace_name,
                     "working_directory": "",
                     "linkable-repo-id": repo_name,
@@ -63,6 +63,7 @@ class TerraformAPICalls():
                 }
             }
         }
+
         # Make Request
         request = requests.post(url=workspaces_url, data=json.dumps(data), headers=self.header)
 
