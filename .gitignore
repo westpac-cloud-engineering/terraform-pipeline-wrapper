@@ -152,3 +152,6 @@ ENV/
 
 environment_variables.json
 data.json
+*run.json
+*apply.log
+*plan.log
