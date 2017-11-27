@@ -100,11 +100,16 @@ def main(request_type, app_id, component_name, environment, run_id, atlas_token,
     run = tf_ws_runs.request_run(request_type=request_type, destroy=destroy)
     log_url = tf_ws_runs.get_plan_log(run_id=run["id"], request_type=request_type)
 
+    with open( 'data.json', 'w') as the_file:
+        the_file.write(json.dumps(run))
+
+    # Files to be archived with Jenkins Job
     with open( run['id'] + '-' + request_type + '.json', 'w') as the_file:
         the_file.write(json.dumps(run))
 
     with open( run['id'] + "-" + request_type + '.log', 'w') as the_file:
         the_file.write(requests.get(log_url).text)
+
 
 
 if __name__ == "__main__":
