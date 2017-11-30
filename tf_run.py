@@ -28,14 +28,15 @@ class BuildInformation:
         self.app_id = app_id
 
         self.base_app_key = "apps/" + app_id + "/"
-        self.base_component_key = self.base_app_key + "/components/" + component_name + "/"
+        self.base_component_key = self.base_app_key + "components/" + component_name + "/"
         self.base_environment_key = self.base_component_key + environment + "/"
 
         # Get info from consul
-        self.tf_workspace = self.get_consul_key(self.base_environment_key + "tf_workspace")
+        print (self.base_environment_key + "terraform/workspace")
+        self.tf_workspace = self.get_consul_key(self.base_environment_key + "terraform/workspace")
         self.tf_organisation = self.get_consul_key(
             "shared_services/terraform/" +
-            self.get_consul_key(self.base_environment_key + "tf_tenant") +
+            self.get_consul_key(self.base_environment_key + "terraform/tenant") +
             "/organisation"
         )
         self.tf_repository = self.get_consul_key(self.base_component_key + "git_repository")
