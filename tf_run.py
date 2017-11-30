@@ -28,7 +28,7 @@ class BuildInformation:
         self.app_id = app_id
 
         self.base_app_key = "apps/" + app_id + "/"
-        self.base_component_key = self.base_app_key + "/pipelines/" + component_name + "/"
+        self.base_component_key = self.base_app_key + "/components/" + component_name + "/"
         self.base_environment_key = self.base_component_key + environment + "/"
 
         # Get info from consul
