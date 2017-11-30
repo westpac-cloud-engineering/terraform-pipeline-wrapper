@@ -11,9 +11,9 @@ p.add_argument('app_id')
 p.add_argument('component_name')
 p.add_argument('environment')
 p.add_argument('atlas_token')
+p.add_argument('azure_client_secret')
 p.add_argument('destroy')
 p.add_argument('run_id')
-
 
 class BuildInformation:
     def __init__(self, app_id, component_name, environment, consul_address, consul_token="", consul_dc=""):
@@ -44,16 +44,25 @@ class BuildInformation:
         c = consul.Consul(host=self.consul_address)
         return c.kv.get(str(key), token=self.consul_token, dc=self.consul_dc)[1]['Value'].decode('utf-8')
 
-def load_app_variables(TE2Vars, repository, branch, environment, app_id):
+def load_app_variables(TE2Vars, repository, branch, environment, component_name, azure_client_secret):
     TE2Vars.delete_all_variables()
     url = "https://raw.githubusercontent.com/" + repository + "/" + branch + "/env/" + environment +".tfvars"
 
     print("Getting Environment Variables from: " + url)
     variable_list = hcl.loads(requests.get(url).text)
+
     TE2Vars.create_or_update_workspace_variable(
-        key="app_id",
-        value=app_id,
-        hcl=False
+        key="component_name",
+        value=component_name,
+        hcl=True
+    )
+
+    ## TO BE REPLACED WITH VAULT CREDENTIAL IN PRIVATE. JUST USING AZURE FOR TEMPORARY
+    TE2Vars.create_or_update_workspace_variable(
+        key="azure_client_secret",
+        value=azure_client_secret,
+        hcl=False,
+        sensitive=True
     )
 
     for obj in variable_list:
@@ -64,7 +73,7 @@ def load_app_variables(TE2Vars, repository, branch, environment, app_id):
         )
 
 
-def main(request_type, app_id, component_name, environment, run_id, atlas_token, destroy=False):
+def main(request_type, app_id, component_name, environment, run_id, atlas_token, azure_client_secret, destroy=False):
 
     info = BuildInformation(
         app_id=app_id,
@@ -94,7 +103,8 @@ def main(request_type, app_id, component_name, environment, run_id, atlas_token,
         repository=info.tf_repository,
         branch="env/" + environment,
         environment=environment,
-        app_id=app_id,
+        component_name=component_name,
+        azure_client_secret=azure_client_secret
     )
 
     run = tf_ws_runs.request_run(request_type=request_type, destroy=destroy)
@@ -115,11 +125,12 @@ def main(request_type, app_id, component_name, environment, run_id, atlas_token,
 if __name__ == "__main__":
     args = p.parse_args()
     main(
-        args.request_type,
-        args.app_id,
-        args.component_name,
-        args.environment,
-        args.run_id,
-        args.atlas_token,
-        args.destroy
+        request_type=args.request_type,
+        app_id=args.app_id,
+        component_name=args.component_name,
+        environment=args.environment,
+        run_id=args.run_id,
+        atlas_token=args.atlas_token,
+        azure_client_secret=args.azure_client_secret,
+        destroy=args.destroy
     )
