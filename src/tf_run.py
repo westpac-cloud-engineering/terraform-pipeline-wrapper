@@ -1,49 +1,9 @@
-import argparse
 from te2_sdk import te2
+from src import ApplicationInformation as ai
+import click
 import json
-import consul
 import hcl
 import requests
-
-p = argparse.ArgumentParser()
-p.add_argument('request_type')
-p.add_argument('app_id')
-p.add_argument('component_name')
-p.add_argument('environment')
-p.add_argument('atlas_token')
-p.add_argument('azure_client_secret')
-p.add_argument('destroy')
-p.add_argument('run_id')
-
-class BuildInformation:
-    def __init__(self, app_id, component_name, environment, consul_address, consul_token="", consul_dc=""):
-
-        # Consul Information
-        self.consul_address = consul_address
-        self.consul_token = consul_token
-        self.consul_dc = consul_dc
-
-        self.component_name = component_name
-        self.environment = environment
-        self.app_id = app_id
-
-        self.base_app_key = "apps/" + app_id + "/"
-        self.base_component_key = self.base_app_key + "components/" + component_name + "/"
-        self.base_environment_key = self.base_component_key + environment + "/"
-
-        # Get info from consul
-        print (self.base_environment_key + "terraform/workspace")
-        self.tf_workspace = self.get_consul_key(self.base_environment_key + "terraform/workspace")
-        self.tf_organisation = self.get_consul_key(
-            "shared_services/terraform/" +
-            self.get_consul_key(self.base_environment_key + "terraform/tenant") +
-            "/organisation"
-        )
-        self.tf_repository = self.get_consul_key(self.base_component_key + "git_repository")
-
-    def get_consul_key(self, key):
-        c = consul.Consul(host=self.consul_address)
-        return c.kv.get(str(key), token=self.consul_token, dc=self.consul_dc)[1]['Value'].decode('utf-8')
 
 def load_app_variables(TE2Vars, repository, branch, environment, component_name, azure_client_secret):
     TE2Vars.delete_all_variables()
@@ -73,10 +33,18 @@ def load_app_variables(TE2Vars, repository, branch, environment, component_name,
             hcl=True
         )
 
-
+@click.command()
+@click.option('--request_type', required=True)
+@click.option('--app_id', required=True)
+@click.option('--component_name', required=True)
+@click.option('--environment', required=True)
+@click.option('--atlas_token', required=True)
+@click.option('--azure_client_secret', required=True)
+@click.option('--destroy', required=True)
+@click.option('--run_id', required=True)
 def main(request_type, app_id, component_name, environment, run_id, atlas_token, azure_client_secret, destroy=False):
 
-    info = BuildInformation(
+    info = ai.ApplicationInformation(
         app_id=app_id,
         component_name=component_name,
         environment=environment,
@@ -121,17 +89,5 @@ def main(request_type, app_id, component_name, environment, run_id, atlas_token,
     with open( run['id'] + "-" + request_type + '.log', 'w') as the_file:
         the_file.write(requests.get(log_url).text)
 
-
-
 if __name__ == "__main__":
-    args = p.parse_args()
-    main(
-        request_type=args.request_type,
-        app_id=args.app_id,
-        component_name=args.component_name,
-        environment=args.environment,
-        run_id=args.run_id,
-        atlas_token=args.atlas_token,
-        azure_client_secret=args.azure_client_secret,
-        destroy=args.destroy
-    )
+    main()
