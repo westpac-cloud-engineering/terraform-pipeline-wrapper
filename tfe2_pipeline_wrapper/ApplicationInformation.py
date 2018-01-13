@@ -31,6 +31,12 @@ class ApplicationInformation:
             "/organisation"
         )
 
+    def get_azure_provider(self):
+        return None # TODO: Module to get Azure Provider
+
+    def get_aws_provider(self):
+        return None # TODO: Module to get aws provider information
+
     def _get_consul_key(self, key):
         c = consul.Consul(host=self.consul_address)
         return c.kv.get(str(key), token=self.consul_token, dc=self.consul_dc)[1]['Value'].decode('utf-8')

@@ -1,5 +1,5 @@
 from te2_sdk import te2
-from src import ApplicationInformation as ai
+from tfe2_pipeline_wrapper import ApplicationInformation as ai
 import click
 import json
 import hcl
