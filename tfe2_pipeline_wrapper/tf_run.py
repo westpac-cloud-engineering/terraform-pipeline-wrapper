@@ -5,52 +5,15 @@ import json
 import hcl
 import requests
 
-def load_app_variables(TE2Vars, repository, branch, environment, component_name, azure_client_secret):
-    TE2Vars.delete_all_variables()
-    url = "https://raw.githubusercontent.com/" + repository + "/" + branch + "/env/" + environment +".tfvars"
-
-    print("Getting Environment Variables from: " + url)
-    variable_list = hcl.loads(requests.get(url).text)
-
-    TE2Vars.create_or_update_workspace_variable(
-        key="component_name",
-        value=component_name,
-        hcl=True
-    )
-
-    ## TO BE REPLACED WITH VAULT CREDENTIAL IN PRIVATE. JUST USING AZURE FOR TEMPORARY
-    TE2Vars.create_or_update_workspace_variable(
-        key="azure_client_secret",
-        value=azure_client_secret,
-        hcl=False,
-        sensitive=True
-    )
-
-    for obj in variable_list:
-        TE2Vars.create_or_update_workspace_variable(
-            key=obj,
-            value=hcl.dumps(variable_list[obj]),
-            hcl=True
-        )
 
 @click.command()
-@click.option('--request_type', required=True)
-@click.option('--app_id', required=True)
-@click.option('--component_name', required=True)
-@click.option('--environment', required=True)
-@click.option('--atlas_token', required=True)
-@click.option('--azure_client_secret', required=True)
-@click.option('--destroy', required=True)
-@click.option('--run_id', required=True)
-def main(request_type, app_id, component_name, environment, run_id, atlas_token, azure_client_secret, destroy=False):
+@click.option('--configuration_file', required=True)
+def main(configuration_file):
 
-    info = ai.ApplicationInformation(
-        app_id=app_id,
-        component_name=component_name,
-        environment=environment,
-        consul_address="consul.australiaeast.cloudapp.azure.com"
-    )
+    info = ai.ApplicationInformation(configuration_file)
+    info.clone_repository_and_compress()
 
+    '''
     tf_client = te2.TE2Client(
         organisation=info.tf_organisation,
         atlas_token=atlas_token,
@@ -88,6 +51,8 @@ def main(request_type, app_id, component_name, environment, run_id, atlas_token,
 
     with open( run['id'] + "-" + request_type + '.log', 'w') as the_file:
         the_file.write(requests.get(log_url).text)
+
+    '''
 
 if __name__ == "__main__":
     main()

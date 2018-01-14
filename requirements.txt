@@ -4,3 +4,4 @@ te2-sdk==0.1.5
 python-consul==0.7.2
 click==6.7
 jinja2==2.10
+GitPython==2.1.8

@@ -1,7 +1,7 @@
 ##############################################################
 ## AUTO-GENERATED FILE:
 ## Created through Jenkins / Terraform Job, pulling data from
-## local Consul Cluster
+## Consul KV (Created through cloud customer on-boarding)
 ##
 ## Generated Date: {{ job.generated_date }}
 ## Workspace: {{ job.workspace_name }}
@@ -17,10 +17,10 @@ locals {
         bcrm_id = "{{ app.bcrm_id }}"
     }
 }
-{% if provider_list.azure_providers %}
+{% if provider_list.azure %}
 ##############################################################
 ## Azure Provider
-## Subscription, Tenant and Client are passed by autogen
+## Subscription, Tenant and Client are passed by autogenerator
 ## Secret passed as variable
 ##############################################################
 variable "azurerm_client_secret" {
@@ -28,19 +28,19 @@ variable "azurerm_client_secret" {
   description = "Azure Provider Secret"
 }
 
+locals {
+    resource_group_name = "{{provider_list.azure.resource_group_name}}"
+}
+
 provider "azurerm" {
-    subscription_id = "{{azure_provider.subscription_id}}"
-    tenant_id = "{{azure_provider.tenant_id}}"
-    client_id = "{{azure_provider.client_id}}"
+    subscription_id = "{{provider_list.azure.subscription_id}}"
+    tenant_id = "{{provider_list.azure.tenant_id}}"
+    client_id = "{{provider_list.azure.client_id}}"
     client_secret = "${var.azurerm_client_secret}"
 }
-{% endif %}
-
-{% if provider_list.aws_providers %}
+{% endif %}{% if provider_list.aws %}
 ##############################################################
 ## AWS Provider
 ## TBA
 ##############################################################
 {% endif %}
-
-### OTHER PROVIDERS TO BE INSERTED HERE ###

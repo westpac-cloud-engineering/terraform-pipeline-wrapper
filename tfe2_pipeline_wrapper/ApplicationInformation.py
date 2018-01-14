@@ -1,77 +1,123 @@
-import io, os, tarfile
+import json
+import os
+import tarfile
+import time
 import consul
+import jinja2
+import git
+import tempfile
+
 
 class ApplicationInformation:
-    def __init__(self, app_id, component_name, environment, consul_address, consul_token="", consul_dc=""):
+    def __init__(self, configuration_file):
+        with open(configuration_file) as config:
+            data = json.load(config)
+            self.consul_information = data["consul"]
+            self.deployment_information = data["deployment"]
 
-        # Application Information
-        self.component_name = component_name
-        self.environment = environment
-        self.app_id = app_id
-        self.consul_address = consul_address
-        self.consul_token = consul_token
-        self.consul_dc = consul_dc
-
-        self.get_application_information_from_consul()
+        # Consul Application Key Paths
+        self.base_app_key = "apps/" + self.deployment_information['id'] + "/"
+        self.base_component_key = self.base_app_key + "deployments/" + self.deployment_information['component_name'] + "/"
+        self.base_environment_key = self.base_component_key + self.deployment_information['environment'] + "/"
 
     def get_application_information_from_consul(self):
-        # Consul Application Key Paths
-        self.base_app_key = "apps/" + self.app_id + "/"
-        self.base_component_key = self.base_app_key + "components/" + self.component_name + "/"
-        self.base_environment_key = self.base_component_key + self.environment + "/"
+        return {
+            'name': self._get_consul_key(self.base_app_key + "app_name"),
+            'component_name': self.deployment_information['component_name'],
+            'id': self.deployment_information['id'],
+            'environment': self.deployment_information['environment'],
+            'data_classification': "TBA",
+            'bcrm_id': self._get_consul_key(self.base_app_key + "bcrm"),
+        }
 
-        # Get Deployment information from Consul
-        self.tf_repository = self._get_consul_key(self.base_component_key + "git_repository")
-        self.tf_workspace = self._get_consul_key(self.base_environment_key + "terraform/workspace")
-        self.tf_tenant = self._get_consul_key(self.base_environment_key + "terraform/tenant")
-
-        self.tf_organisation = self._get_consul_key(
-            "shared_services/terraform/" +
-             self.tf_tenant +
-            "/organisation"
-        )
+    def get_terraform_tenant_information(self):
+        tenant = "poc" # TODO: Remove Hardcoding of Tenant ID
+        return {
+            'workspace': self._get_consul_key(self.base_environment_key + "terraform/tf_workspace"),
+            'tenant': tenant,
+            'organisation': self._get_consul_key("shared_services/terraform/" + tenant + "/organisation")
+        }
 
     def get_azure_provider(self):
-        return None # TODO: Module to get Azure Provider
+        try:
+            subscription_key = self._get_consul_key(self.base_environment_key + "azure/subscription_key")
+        except:
+            return None
+        return {
+            'client_id': self._get_consul_key(self.base_environment_key + "azure/client_id"),
+            'resource_group_name': self._get_consul_key(self.base_environment_key + "azure/resource_group_name"),
+            'subscription_id': self._get_consul_key(subscription_key + "subscription_id"),
+            'tenant_id': self._get_consul_key(subscription_key + "tenant_id"),
+        }
+
+    @staticmethod
+    def load_app_variables(TE2Vars, azure_client_secret):
+        TE2Vars.delete_all_variables()
+        url = "https://raw.githubusercontent.com/" + repository + "/" + branch + "/env/" + environment + ".tfvars"
+
+        print("Getting Environment Variables from: " + url)
+        variable_list = hcl.loads(requests.get(url).text)
+
+        ## TODO: Replace with Vault Secrets Call
+        TE2Vars.create_or_update_workspace_variable(
+            key="azure_client_secret",
+            value=azure_client_secret,
+            hcl=False,
+            sensitive=True
+        )
+
+        for obj in variable_list:
+            TE2Vars.create_or_update_workspace_variable(
+                key=obj,
+                value=hcl.dumps(variable_list[obj]),
+                hcl=True
+            )
 
     def get_aws_provider(self):
         return None # TODO: Module to get aws provider information
 
     def _get_consul_key(self, key):
-        c = consul.Consul(host=self.consul_address)
-        return c.kv.get(str(key), token=self.consul_token, dc=self.consul_dc)[1]['Value'].decode('utf-8')
+        c = consul.Consul(host=self.consul_information['address'], port=self.consul_information['port'])
+        return c.kv.get(
+            str(key),
+            token=self.consul_information['token'],
+            dc=self.consul_information['dc']
+        )[1]['Value'].decode('utf-8')
 
-    # TODO: This Function to compress files in memory
     @staticmethod
-    def _compress_files_in_memory(source_directory="/"):
-        """ Returns a tar file, in memory as an IOStream
+    def tar_configuration_contents(temp_directory):
+        # Compress Files into Temporary Tar file
+        configuration_files_tar = tempfile.TemporaryFile()
+        with tarfile.open(fileobj=configuration_files_tar, mode='w:') as tar:
+            tar.add(os.path.join(temp_directory, "Terraform_Configuration"), arcname=os.path.sep)
 
-        This object is held in memory to reduce the likelihood of secrets being written to disk.
+        return configuration_files_tar
 
-        :param source_directory: Source Directory which needs to be tarred
-        :return: IOStream
-        """
+    def clone_repository_and_compress(self):
+        with tempfile.TemporaryDirectory() as temp_directory:
+            git.Repo.clone_from('https://github.com/westpac-cloud-deployments/001_DemoApp_ComponentName.git', temp_directory)
+            self.generate_meta_file(os.path.join(temp_directory, "Terraform_Configuration"))
 
-        tar_output = io.StringIO()
-
-        with tarfile.open("configuration_files.tar.gz", "w:gz") as tar:
-            tar.add(source_directory, arcname=os.path.basename(source_directory))
-        return str(source_directory + "configuration_files.tar.gz")
-
-    def _validate_application_archetype_format(self):
-        return False
+            self.tar_configuration_contents(temp_directory) # Tar the Configuration Files
 
 
-class GenerateApplicationArchetype:
-    def __init__(self, directory, application_name):
-        self.directory = directory
-        self.application_name = application_name
+    def generate_meta_file(self, destination):
+        job = {
+            'generated_date': time.strftime("%x %X", time.gmtime()),
+            'workspace_name': self._get_consul_key(self.base_environment_key + "terraform/tf_workspace")
+        }
 
-    def clone_application_archetype(self):
-        return True # TODO: Get Folder from Git Repository
+        provider_list = {
+            'azure': self.get_azure_provider(),
+            'aws': self.get_aws_provider()
+        }
 
-    def _generate_jenkinsfile(self):
-        return False # TODO: Generate JenkinsFile
+        env = jinja2.Environment(loader=jinja2.PackageLoader('tfe2_pipeline_wrapper', 'templates'))
 
-    def _generate_readme_contents(self):
-        return False # TODO: Generate README Contents
+        with open(os.path.join(destination, "meta.tf"), "wb") as fh:
+            print("Generating Meta File")
+            fh.write(env.get_template("deployment_meta.tf.template").render(
+                job=job,
+                app=self.get_application_information_from_consul(),
+                provider_list=provider_list
+            ).encode())
