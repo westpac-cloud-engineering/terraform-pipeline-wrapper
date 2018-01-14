@@ -1,0 +1,4 @@
+{
+  "full_name": "Default Template",
+  "description": "This is the default terraform provisioning template. It encapsulates 4 steps: plan, raise change, apply, close change"
+}

@@ -1,0 +1,54 @@
+// Default Infrastructure Jenkins Plan
+// Required Params:
+// - organisation: Terraform Org                                                          // TO BE REMOVED
+// - app_id: ServiceNow app_id
+// - tf_workspace_name: Terraform Workspace Name to run plan/apply
+// - production: Boolean flag as to whether this is a production environment
+// - destroy_infrastructure: Boolean Flag as to whether this is a destruction action
+// - atlas_token: Atlas Token to authenticate against TF Enterprise                       // TO BE REMOVED WHEN VAULT CALLS IMPLEMENTED
+
+// Convert params to local variables for Shared_library Calls
+def organisation = params.organisation
+def application_id = params.application_id
+def tf_workspace_name = params.tf_workspace_name
+def production = params.production
+def destroy_infrastructure = params.destroy_infrastructure
+def atlas_token = params.atlas_token
+
+// Run Terraform Plan
+def plan_results = terraformPlan {
+    org = organisation
+    app_id = application_id
+    workspace = tf_workspace_name
+    destroy_flag = destroy_infrastructure
+    tf_token = atlas_token
+}
+
+// Stop Plan Execution if no changes to be made.
+if (!plan_results.changes) {
+    return
+}
+
+// Raise a change request (auto approve if non-prod)
+def change_details = raiseChange {
+    app_id = application_id
+    production = production
+}
+
+print "change: ${change_details}"
+print "plan: ${plan_results}"
+
+// Apply the change in Terraform
+apply_results = terraformApply {
+    plan_info  = plan_results
+    org = organisation
+    app_id = application_id
+    workspace = tf_workspace_name
+    destroy_flag = destroy_infrastructure
+    tf_token = atlas_token
+}
+
+// Close the change in ServiceNow
+closeChange {
+    change = change_details
+}
