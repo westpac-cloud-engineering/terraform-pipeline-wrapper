@@ -6,6 +6,9 @@ import consul
 import jinja2
 import git
 import tempfile
+import hcl
+import te2_sdk.te2 as te2
+import requests
 
 
 class ApplicationInformation:
@@ -14,6 +17,8 @@ class ApplicationInformation:
             data = json.load(config)
             self.consul_information = data["consul"]
             self.deployment_information = data["deployment"]
+            self.atlas_secret = data['atlas_secret']
+            self.azure_secret = data['azure_secret']
 
         # Consul Application Key Paths
         self.base_app_key = "apps/" + self.deployment_information['id'] + "/"
@@ -21,6 +26,11 @@ class ApplicationInformation:
         self.base_environment_key = self.base_component_key + self.deployment_information['environment'] + "/"
 
     def get_application_information_from_consul(self):
+        """This function returns a set list of information from consul around an Application Deployment, based on its
+        environment, application ID and component name
+        :return: Map of Application attributes, including Name, Component_name, id, environment, data_classification & bcrm_id
+        """
+
         return {
             'name': self._get_consul_key(self.base_app_key + "app_name"),
             'component_name': self.deployment_information['component_name'],
@@ -50,28 +60,31 @@ class ApplicationInformation:
             'tenant_id': self._get_consul_key(subscription_key + "tenant_id"),
         }
 
-    @staticmethod
-    def load_app_variables(TE2Vars, azure_client_secret):
-        TE2Vars.delete_all_variables()
-        url = "https://raw.githubusercontent.com/" + repository + "/" + branch + "/env/" + environment + ".tfvars"
-
-        print("Getting Environment Variables from: " + url)
-        variable_list = hcl.loads(requests.get(url).text)
-
-        ## TODO: Replace with Vault Secrets Call
-        TE2Vars.create_or_update_workspace_variable(
-            key="azure_client_secret",
-            value=azure_client_secret,
-            hcl=False,
-            sensitive=True
+    def load_app_variables(self, directory, tf_client):
+        TE2Vars = te2.TE2WorkspaceVariables(
+            client=tf_client,
+            workspace_name=self.get_terraform_tenant_information()['workspace']
         )
 
-        for obj in variable_list:
+        TE2Vars.delete_all_variables()
+        variables_file_path = os.path.join(directory, "Terraform_Variables", self.deployment_information['environment'] + ".tfvars")
+        with open(variables_file_path, 'r') as var_file:
+            variable_list = hcl.load(var_file)
+
+            # TODO: Replace with Vault Secrets Call
             TE2Vars.create_or_update_workspace_variable(
-                key=obj,
-                value=hcl.dumps(variable_list[obj]),
-                hcl=True
+                key="azurerm_client_secret",
+                value=self.azure_secret,
+                hcl=False,
+                sensitive=True
             )
+
+            for obj in variable_list:
+                TE2Vars.create_or_update_workspace_variable(
+                    key=obj,
+                    value=hcl.dumps(variable_list[obj]),
+                    hcl=True
+                )
 
     def get_aws_provider(self):
         return None # TODO: Module to get aws provider information
@@ -93,13 +106,20 @@ class ApplicationInformation:
 
         return configuration_files_tar
 
-    def clone_repository_and_compress(self):
+    def generate_and_upload_configuration(self, TE2Client):
+        TE2WSConfigs = te2.TE2WorkspaceConfigurations(
+            client=TE2Client,
+            workspace_name=self.get_terraform_tenant_information()['workspace']
+        )
+
         with tempfile.TemporaryDirectory() as temp_directory:
             git.Repo.clone_from('https://github.com/westpac-cloud-deployments/001_DemoApp_ComponentName.git', temp_directory)
+
+            self.load_app_variables(temp_directory, TE2Client)  # Uploads the configuration from Repository
             self.generate_meta_file(os.path.join(temp_directory, "Terraform_Configuration"))
-
-            self.tar_configuration_contents(temp_directory) # Tar the Configuration Files
-
+            TE2WSConfigs.upload_configuration(
+                self.tar_configuration_contents(temp_directory)
+            )
 
     def generate_meta_file(self, destination):
         job = {
@@ -121,3 +141,31 @@ class ApplicationInformation:
                 app=self.get_application_information_from_consul(),
                 provider_list=provider_list
             ).encode())
+
+    def raise_servicenow_change(self):
+        # Set the request parameters
+        url = 'https://wbchpaaspoc.service-now.com/api/now/table/change_request'
+
+        # Eg. User name="admin", Password="admin" for this code sample.
+        user = 'rory.chatterton'
+        pwd = ''
+
+        # Set proper headers
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        data = {
+            'short_description': 'Test Change',
+            'category': 'Terraform_Automated_Change',
+            'description': "Automated change generated by Jenkins.",
+            'configuration_item': 'A00031E-Prod-ServiceHubApp'
+        }
+
+        # Do the HTTP request
+        response = requests.post(url, auth=(user, pwd), headers=headers, data=json.dumps(data))
+
+        # Check for HTTP codes other than 200
+        if response.status_code != 200:
+            print('Status:', response.status_code, 'Headers:', response.headers, 'Error Response:', response.json())
+            exit()
+
+        # Decode the JSON response into a dictionary and use the data
+        print(response.json())
