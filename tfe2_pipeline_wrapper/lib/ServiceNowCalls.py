@@ -4,7 +4,6 @@ import json
 
 def raise_servicenow_change(url, username, password):
 
-    # Set proper headers
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     data = {
         'short_description': 'Test Change',

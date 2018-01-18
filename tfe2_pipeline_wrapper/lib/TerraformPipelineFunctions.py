@@ -1,5 +1,6 @@
 import jinja2
 import tempfile
+import json
 import hcl
 import te2_sdk.te2 as te2
 import os
@@ -22,7 +23,29 @@ class TFE2Actions:
             atlas_token=self.atlas_secret,
         )
 
+        self.destroy = False  # TODO: DONT HARDCODE THIS
+
         self.generate_and_upload_configuration()
+
+
+    def generate_run(self, request_type):
+        tf_ws_runs = te2.TE2WorkspaceRuns(
+            client=self.TE2Client,
+            workspace_name=self.tf_info.deployment_information.terraform_tenant['workspace']
+        )
+
+        run = tf_ws_runs.request_run(request_type=request_type, destroy=self.destroy)
+        log_url = tf_ws_runs.get_plan_log(run_id=run["id"], request_type=request_type)
+
+        with open('data.json', 'w') as the_file:
+            the_file.write(json.dumps(run))
+
+        # Files to be archived with Jenkins Job
+        with open(run['id'] + '-' + request_type + '.json', 'w') as the_file:
+            the_file.write(json.dumps(run))
+
+        with open(run['id'] + "-" + request_type + '.log', 'w') as the_file:
+            the_file.write(requests.get(log_url).text)
 
     def _load_app_variables(self, directory, tf_client):
         tfe2_vars = te2.TE2WorkspaceVariables(
@@ -66,9 +89,8 @@ class TFE2Actions:
         :return: Tar zipped TemporaryFile()
         """
         configuration_files_tar = tempfile.TemporaryFile()
-        with tarfile.open(fileobj=configuration_files_tar, mode='w:gz') as tar:
-            tar.add(os.path.join(temp_directory, "Terraform_Configuration"), arcname=os.path.sep)
-
+        with tarfile.open('C:\\Users\\roryc\\Desktop\\file.tar.gz', mode='w:gz') as tar:
+            tar.add(os.path.join(temp_directory, "Terraform_Configuration"), arcname='')
         return configuration_files_tar
 
     def _download_config_and_unzip_from_github(self, repo, branch):
