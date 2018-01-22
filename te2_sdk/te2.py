@@ -73,7 +73,6 @@ class TE2WorkspaceConfigurations:
         )
 
         if str(request.status_code).startswith("2"):
-            print(request.json())
             print("Successfully Uploaded Configuration")
         else:
             print(request)

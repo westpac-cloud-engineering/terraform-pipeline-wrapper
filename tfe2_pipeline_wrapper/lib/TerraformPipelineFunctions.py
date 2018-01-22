@@ -89,8 +89,9 @@ class TFE2Actions:
         :return: Tar zipped TemporaryFile()
         """
         configuration_files_tar = tempfile.TemporaryFile()
-        with tarfile.open('C:\\Users\\roryc\\Desktop\\file.tar.gz', mode='w:gz') as tar:
-            tar.add(os.path.join(temp_directory, "Terraform_Configuration"), arcname='')
+
+        with tarfile.open(fileobj=configuration_files_tar, mode='w:gz') as tar:
+            tar.add(os.path.join(temp_directory, "Terraform_Configuration"), arcname='.')
         return configuration_files_tar
 
     def _download_config_and_unzip_from_github(self, repo, branch):
