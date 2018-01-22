@@ -36,8 +36,8 @@ class TE2Client:
     def patch(self, path, data, params=None):
         return requests.patch(url=self.base_url + path, data=data, headers=self.request_header, params=params)
 
-    def put(self, path, files, params=None):
-        return requests.put(path, files=files, params=params)
+    def put(self, path, files):
+        return requests.put(path, files=files)
 
     def delete(self, path, params=None):
         return requests.delete(url=self.base_url + path, headers=self.request_header, params=params)
@@ -66,10 +66,12 @@ class TE2WorkspaceConfigurations:
             raise KeyError("Configuration Creation Failed")
 
 
-    def upload_configuration(self, tar_file_directory):
+    def upload_configuration(self, tar_file_object):
+        tar_file_object.seek(0)
+
         request = self.client.put(
             path=self._create_configuration_version(),
-            files={'data': tar_file_directory}
+            files={'data': tar_file_object}
         )
 
         if str(request.status_code).startswith("2"):

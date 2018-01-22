@@ -86,7 +86,7 @@ class TFE2Actions:
         """
         Takes a TemporaryDirectory() class object, and returns a Tarred TemporaryFile()
         :param temp_directory:
-        :return: Tar zipped TemporaryFile()
+        :return: Tar gzipped TemporaryFile()
         """
         configuration_files_tar = tempfile.TemporaryFile()
 
