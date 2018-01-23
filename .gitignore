@@ -66,7 +66,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -155,3 +154,5 @@ data.json
 *run.json
 *apply.log
 *plan.log
+
+deployment_configuration.json
