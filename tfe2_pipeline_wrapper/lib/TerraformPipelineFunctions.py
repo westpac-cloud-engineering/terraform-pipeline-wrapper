@@ -95,8 +95,11 @@ class TFE2Actions:
 
     def _download_config_and_unzip_from_github(self, repo, branch):
         uri = "https://github.com/" + repo + "/archive/" + branch + ".zip"
-        print('Downloading Repository from:' + uri)
-        zip_ref = zipfile.ZipFile(io.BytesIO(requests.get(uri).content))
+        print('Downloading Repository from: ' + uri)
+        try:
+            zip_ref = zipfile.ZipFile(io.BytesIO(requests.get(uri).content))
+        except zipfile.BadZipFile:
+            raise FileNotFoundError("Cannot find Repository URL. Most likely bad branch or tag.")
         temp_directory = tempfile.TemporaryDirectory()
         zip_ref.extractall(temp_directory.name)
         return temp_directory
