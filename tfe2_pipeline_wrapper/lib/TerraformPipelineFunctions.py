@@ -96,6 +96,7 @@ class TFE2Actions:
     def _download_config_and_unzip_from_github(self, repo, branch):
         uri = "https://github.com/" + repo + "/archive/" + branch + ".zip"
         print('Downloading Repository from: ' + uri)
+
         try:
             zip_ref = zipfile.ZipFile(io.BytesIO(requests.get(uri).content))
         except zipfile.BadZipFile:
