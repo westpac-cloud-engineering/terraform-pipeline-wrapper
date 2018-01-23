@@ -23,19 +23,18 @@ class TFE2Actions:
             atlas_token=self.atlas_secret,
         )
 
-        self.destroy = False  # TODO: DONT HARDCODE THIS
-
-        self.generate_and_upload_configuration()
-
-
-    def generate_run(self, request_type):
+    def generate_run(self, request_type, run_id=None):
         tf_ws_runs = te2.TE2WorkspaceRuns(
             client=self.TE2Client,
             workspace_name=self.tf_info.deployment_information.terraform_tenant['workspace']
         )
 
-        run = tf_ws_runs.request_run(request_type=request_type, destroy=self.destroy)
-        log_url = tf_ws_runs.get_plan_log(run_id=run["id"], request_type=request_type)
+        run = tf_ws_runs.request_run(request_type=request_type, run_id=run_id, destroy=self.tf_info.deployment_information.destroy)
+
+        if request_type == "plan":
+            log_url = tf_ws_runs.get_plan_log(run_id=run["id"], request_type=request_type)
+        elif request_type == "apply":
+            log_url = tf_ws_runs.get_plan_log(run_id=run_id, request_type=request_type)
 
         with open('data.json', 'w') as the_file:
             the_file.write(json.dumps(run))
@@ -102,8 +101,7 @@ class TFE2Actions:
         return temp_directory
 
     def generate_and_upload_configuration(self):
-        repo = 'westpac-cloud-deployments/001_DemoApp_ComponentName'
-        branch = 'master'
+        repo = self.tf_info.deployment_information.git_repository
 
         te2_ws_config = te2.TE2WorkspaceConfigurations(
             client=self.TE2Client,
@@ -112,10 +110,10 @@ class TFE2Actions:
 
         temp_directory = self._download_config_and_unzip_from_github(
             repo=repo,
-            branch=branch  # Base on Master
+            branch=self.tf_info.deployment_information.branch_or_tag
         )
-
-        temp_path = os.path.join(temp_directory.name, repo.split('/')[1] + "-" + branch)
+        repo_folder_name = os.listdir(temp_directory.name)[0]
+        temp_path = os.path.join(temp_directory.name, repo_folder_name)
 
         self._load_app_variables(temp_path, self.TE2Client)  # Uploads the configuration from Repository
         self.tf_info.generate_meta_file(os.path.join(temp_path, "Terraform_Configuration"))
@@ -143,7 +141,9 @@ class TFDeploymentInfoGenerator:
             consul_client=self.consul_client,
             application_id=configuration_map['deployment']['id'],
             component_name=configuration_map['deployment']['component_name'],
-            environment=configuration_map['deployment']['environment']
+            environment=configuration_map['deployment']['environment'],
+            branch_or_tag=configuration_map['deployment']['branch_or_tag'],
+            destroy=configuration_map['deployment']['destroy']
         )
 
     def _application_information_for_template(self):

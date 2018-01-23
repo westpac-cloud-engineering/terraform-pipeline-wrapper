@@ -2,7 +2,7 @@ import consul
 
 
 class ConsulApplicationDeploymentKeys:
-    def __init__(self, consul_client, application_id, component_name, environment):
+    def __init__(self, consul_client, application_id, component_name, environment, branch_or_tag, destroy):
         """
         This class returns application information, based on the deployments ApplicationID, DeploymentID and Component_Name
         :param consul_client: ConsulClient object instantiation
@@ -13,6 +13,8 @@ class ConsulApplicationDeploymentKeys:
         self.id = application_id
         self.component_name = component_name
         self.environment = environment
+        self.branch_or_tag = branch_or_tag
+        self.destroy = destroy
 
         self.consul_client = consul_client
         self.base_app_key = "apps/" + application_id + "/"

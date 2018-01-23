@@ -121,8 +121,10 @@ class TE2WorkspaceRuns:
         request = self.client.post(path=path, data=json.dumps(self._render_run_request(destroy)))
 
         if str(request.status_code).startswith("2"):
-            return request.json()['data']
-
+            try:
+                return request.json()['data']
+            except TypeError:
+                return {}
         else:
             raise SyntaxError("Invalid call to Terraform Enterprise 2")
 
@@ -186,19 +188,19 @@ class TE2WorkspaceRuns:
             
             The list needs to be pulled on each iteration
             """
+            runs_to_discard = False
 
             run_list = self.client.get(path="/workspaces/" + self.workspace_id + "/runs").json()['data']
 
-            for run in run_list:
+            for run in reversed(run_list):
 
                 run_status = run["attributes"]["status"]
 
-                if run_status == "planned" or run_status == "pending" or run_status == "planning":
+                if run_status == "planned" or run_status == "planning" or run_status == "pending":
                     if run_status == "planned":
                         print("Discarding: " + run["id"])
-                        self.discard_plan(run["id"])
-                else:
-                    runs_to_discard = False
+                        self.discard_plan_by_id(run["id"])
+                    runs_to_discard = True
         return True
 
     def discard_plan_by_id(self, run_id):
@@ -213,6 +215,18 @@ class TE2WorkspaceRuns:
         else:
             raise KeyError("Plan has already been discarded")
 
+    def cancel_plan_by_id(self, run_id):
+
+        request = self.client.post(
+            path="/runs/" + run_id + "/actions/cancel",
+            data=json.dumps({"comment": "Dropped by automated pipeline build"})
+        )
+
+        if str(request.status_code).startswith("2"):
+            return "Successfully Cancelled Plan: " + run_id
+        else:
+            raise KeyError("Plan has already been cancelled")
+
     def get_run_action(self, run_id, request_type):
         run = self.client.get("/runs/" + run_id + "/" + request_type)
 
@@ -225,33 +239,28 @@ class TE2WorkspaceRuns:
     def get_plan_log(self, run_id, request_type="plan"):
         return self.get_run_action(run_id, request_type=request_type)['attributes']['log-read-url']
 
-    def request_run(self, request_type="plan", destroy=False):
+    def request_run(self, request_type="plan", run_id=None, destroy=False):
+        request = self._request_run_request(destroy=destroy, run_id=run_id)
+        if request:
+            run_id = request['id']
 
-        results = {}
+        print("New Run: " + run_id)
 
-        try:
-            request = self._request_run_request(destroy=destroy)
-        except SyntaxError:
-            results = {}
-        else:
-            print("New Run: " + request['id'])
+        results = self._get_run_results(run_id=run_id, request_type=request_type)
 
-            results = self._get_run_results(run_id=request['id'], request_type=request_type)
+        if results['attributes']['status'] == "errored":
+            print("Job Status: Failed")
 
-            if results['attributes']['status'] == "errored":
-                print("Job Status: Failed")
+        elif results['attributes']['status'] == "planned":
+            if results['attributes']['has-changes']:
+                print("Job Status: Changes Detected")
+            else:
+                print("Job Status: No Changes Detected")
 
-            elif results['attributes']['status'] == "planned":
-                if results['attributes']['has-changes']:
-                    print("Job Status: Changes Detected")
-                else:
-                    print("Job Status: No Changes Detected")
+        elif results['attributes']['status'] == "applied":
+            print("Job Status: Apply Successful")
 
-            elif results['attributes']['status'] == "applied":
-                print("Job Status: Apply Successful")
-
-        finally:
-            return results
+        return results
 
 
 class TE2WorkspaceVariables():
@@ -356,7 +365,7 @@ class TE2WorkspaceVariables():
             request = self.client.post(path="/vars", data=json.dumps(request_data))
         else:
             request_data["data"]["id"] = existing_variable
-            request = self.client.patch(path="/vars/" + existing_variable, data=json.dumps(request_data))
+            request = self.client.patch(path="/vars/" + existing_variable['id'], data=json.dumps(request_data))
 
         if str(request.status_code).startswith("2"):
             return True
