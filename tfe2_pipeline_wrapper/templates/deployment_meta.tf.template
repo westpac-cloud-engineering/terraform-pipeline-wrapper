@@ -33,6 +33,7 @@ locals {
 }
 
 provider "azurerm" {
+    alias = "default_provider"
     subscription_id = "{{provider_list.azure.subscription_id}}"
     tenant_id = "{{provider_list.azure.tenant_id}}"
     client_id = "{{provider_list.azure.client_id}}"
