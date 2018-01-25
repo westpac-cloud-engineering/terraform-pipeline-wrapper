@@ -35,16 +35,17 @@ class TFE2Actions:
             log_url = tf_ws_runs.get_plan_log(run_id=run["id"], request_type=request_type)
         elif request_type == "apply":
             log_url = tf_ws_runs.get_plan_log(run_id=run_id, request_type=request_type)
+        else:
+            raise SyntaxError("Invalid Request Type")
 
-        with open('data.json', 'w') as the_file:
+        with open('deployment_meta.json', 'w') as the_file:
             the_file.write(json.dumps(run))
 
-        # Files to be archived with Jenkins Job
-        with open(run['id'] + '-' + request_type + '.json', 'w') as the_file:
-            the_file.write(json.dumps(run))
+        with open('deployment_' + request_type + '.log', 'w') as the_file:
+            log = requests.get(log_url).text
+            print("Log Output: ", log)
 
-        with open(run['id'] + "-" + request_type + '.log', 'w') as the_file:
-            the_file.write(requests.get(log_url).text)
+            the_file.write(log)
 
     def _load_app_variables(self, directory, tf_client):
         tfe2_vars = te2.TE2WorkspaceVariables(
@@ -71,7 +72,7 @@ class TFE2Actions:
                 sensitive=True
             )
 
-            print("Uploading Application Variables from: " + variables_file_path)
+            print("Uploading Application Variables from: " + str(self.tf_info.deployment_information.environment) + ".tfvars")
             for obj in variable_list:
                 print(" - " + obj + ": " + variable_list[obj])
                 tfe2_vars.create_or_update_workspace_variable(
