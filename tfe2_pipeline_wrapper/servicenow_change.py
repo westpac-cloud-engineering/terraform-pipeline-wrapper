@@ -15,13 +15,20 @@ def main(action_type, configuration_file, log_file, sys_id=None):
     with open(log_file, "r", encoding="utf-8") as log_file:
         log = log_file.read()
 
-    # Open Action
+    # Open or Close a change
+    results = {}
     if action_type == "plan":
-        SNOW.raise_servicenow_change(configuration_data=config, plan_log=log)
+        results = SNOW.raise_servicenow_change(configuration_data=config, plan_log=log)
     elif action_type == "apply":
-        SNOW.close_servicenow_change(configuration_data=config, sys_id=sys_id, apply_results=log)
+        results = SNOW.close_servicenow_change(configuration_data=config, sys_id=sys_id, apply_results=log)
     else:
         print("Invalid Action Type")
+
+    # Write run results to file
+    with open('change_results.json', "w", encoding="utf-8") as outfile:
+        outfile.write(json.dumps(results))
+
+
 
 if __name__ == "__main__":
     main()
