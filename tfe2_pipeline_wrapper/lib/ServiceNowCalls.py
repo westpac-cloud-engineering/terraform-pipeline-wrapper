@@ -1,11 +1,11 @@
 import requests
 import json
 import datetime
+import pprint
 
+HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
 
 def raise_servicenow_change(configuration_data, plan_log):
-
-    headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
     # Change Details
     description = "Terraform Deployment - App:  " + configuration_data['deployment']['id'] + \
@@ -13,13 +13,6 @@ def raise_servicenow_change(configuration_data, plan_log):
         " | Environment: " + configuration_data['deployment']['environment']
     justification = "This is an automated change raised by Terraform. It has been pre-approved by the Service " \
                     "Engineering team"
-    implementation_plan = plan_log
-    risk_and_impact_plan = "Low as Non-Production Environment. Not Customer Facing. Plan Succeeded"
-    backout_plan = "Re-run this workflow with an earlier working version of the application."
-    test_plan = "Tests are automated as part of the declarative run model."
-
-    scheduled_start = (datetime.datetime.today() + datetime.timedelta(minutes=2)).strftime("YYYYMMDD HH:mm:ss (%Y-%m-%d %H:%M:%S)")
-    scheduled_finish = (datetime.datetime.today() + datetime.timedelta(minutes=22)).strftime("YYYYMMDD HH:mm:ss (%Y-%m-%d %H:%M:%S)")
 
     data = {
         'title': "Terraform Automated Change",
@@ -28,25 +21,38 @@ def raise_servicenow_change(configuration_data, plan_log):
         'category': 'Software',
         'description': description,
         "justification": justification,
-        "implementation_plan": implementation_plan,
-        "risk_impact_analysis": risk_and_impact_plan,
-        "test_plan": test_plan,
-        "backout_plan": backout_plan,
-        "start_date": scheduled_start,
-        "end_date": scheduled_finish
+        "implementation_plan": plan_log,
+        "risk_impact_analysis": "Low as Non-Production Environment. Not Customer Facing. Plan Succeeded",
+        "test_plan": "Tests are automated as part of the declarative run model.",
+        "backout_plan": "Re-run this workflow with an earlier working version of the application.",
+        "start_date": (datetime.datetime.today() + datetime.timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S"),
+        "end_date": (datetime.datetime.today() + datetime.timedelta(minutes=22)).strftime("%Y-%m-%d %H:%M:%S"),
+        "assignment_group": configuration_data['deployment']['id'],
+        "state": -1
     }
 
     # Do the HTTP request
     response = requests.post(
         url=configuration_data['service_now']['url'],
         auth=(configuration_data['service_now']['username'], configuration_data['service_now']['password']),
-        headers=headers,
+        headers=HEADERS,
         data=json.dumps(data)
     )
 
-    # Check for HTTP codes other than 200
-    if response.status_code != 200:
-        print('Status:', response.status_code, 'Headers:', response.headers, 'Error Response:', response.json())
-        exit()
+
+
+def close_servicenow_change(configuration_data, sys_id, apply_results):
+    data = {
+        "close_code": "successful",
+        "close_notes": apply_results,
+        "state": 3
+    }
+
+    response = requests.patch(
+        url=configuration_data['service_now']['url'] + "/" + sys_id,
+        auth=(configuration_data['service_now']['username'], configuration_data['service_now']['password']),
+        headers=HEADERS,
+        data=json.dumps(data)
+    )
 
     print(response.json())

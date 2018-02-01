@@ -118,7 +118,8 @@ class TFE2Actions:
             repo=repo,
             branch=self.tf_info.deployment_information.branch_or_tag
         )
-        repo_folder_name = os.listdir(temp_directory.name)[0]
+        repo_folder_name = os.listdir(temp_directory.name)[0] # Get Repository Folder Name
+
         temp_path = os.path.join(temp_directory.name, repo_folder_name)
 
         self._load_app_variables(temp_path, self.TE2Client)  # Uploads the configuration from Repository

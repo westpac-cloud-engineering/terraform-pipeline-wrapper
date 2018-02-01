@@ -19,7 +19,7 @@ class ConsulApplicationDeploymentKeys:
         self.consul_client = consul_client
         self.base_app_key = "apps/" + application_id + "/"
         self.base_component_key = self.base_app_key + "deployments/" + component_name + "/"
-        self.base_environment_key = self.base_component_key + environment+ "/"
+        self.base_environment_key = self.base_component_key + environment + "/"
 
         self.name = self.consul_client.get_consul_key(self.base_app_key + "app_name")
         self.bcrm_id = self.consul_client.get_consul_key(self.base_app_key + "bcrm")
