@@ -154,5 +154,6 @@ data.json
 *run.json
 *apply.log
 *plan.log
+deployment_meta.json
 
 deployment_configuration.json
