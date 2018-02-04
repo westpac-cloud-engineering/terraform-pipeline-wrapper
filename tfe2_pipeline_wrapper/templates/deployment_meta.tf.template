@@ -33,6 +33,7 @@ locals {
     azure_subnet_data_id = "{{provider_list.azure.subnet_data_id}}"
     azure_subnet_public_id = "{{provider_list.azure.subnet_public_id}}"
     azure_subnet_private_id = "{{provider_list.azure.subnet_private_id}}"
+    azure_location = "{{provider_list.azure.location}}"
 }
 
 provider "azurerm" {

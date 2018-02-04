@@ -49,6 +49,7 @@ class ConsulApplicationDeploymentKeys:
             'subnet_data_id': self.consul_client.get_consul_key(subscription_key + "subnets/data"),
             'subnet_public_id': self.consul_client.get_consul_key(subscription_key + "subnets/public"),
             'subnet_private_id': self.consul_client.get_consul_key(subscription_key + "subnets/private"),
+            'location': self.consul_client.get_consul_key(subscription_key + "location")
         }
 
     def get_terraform_tenant(self):
