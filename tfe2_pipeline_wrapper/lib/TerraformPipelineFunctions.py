@@ -74,7 +74,7 @@ class TFE2Actions:
 
             print("Uploading Application Variables from: " + str(self.tf_info.deployment_information.environment) + ".tfvars")
             for obj in variable_list:
-                print(" - " + obj + ": " + variable_list[obj])
+                print(" - " + obj + ": " + str(variable_list[obj]))
                 tfe2_vars.create_or_update_workspace_variable(
                     key=obj,
                     value=hcl.dumps(variable_list[obj]),
