@@ -30,8 +30,6 @@ def raise_servicenow_change(configuration_data, plan_log):
         "state": -1
     }
 
-    print(data)
-
     # Do the HTTP request
     response = requests.post(
         url=configuration_data['service_now']['url'],
@@ -54,7 +52,7 @@ def close_servicenow_change(configuration_data, sys_id, apply_results):
     data = {
         "close_code": "successful",
         "close_notes": apply_results,
-        "state": 3
+        "state": 3  # Closed Status
     }
 
     response = requests.patch(
@@ -63,7 +61,6 @@ def close_servicenow_change(configuration_data, sys_id, apply_results):
         headers=HEADERS,
         data=json.dumps(data)
     )
-
 
 
     if str(response.status_code).startswith("2"):

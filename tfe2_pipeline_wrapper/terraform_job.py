@@ -22,6 +22,7 @@ def main(request_type, configuration_file, run_id=None):
     elif request_type == "apply":
         TFE2Actions.generate_run('apply', run_id)
 
+
 if __name__ == "__main__":
     main()
 
