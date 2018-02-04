@@ -1,7 +1,6 @@
 import requests
 import json
 import datetime
-import pprint
 
 HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
 
@@ -39,13 +38,21 @@ def raise_servicenow_change(configuration_data, plan_log):
         data=json.dumps(data)
     )
 
+    if str(response.status_code).startswith("2"):
+        print("Change '" + response.json()['result']['number'] + "' successfully raised")
+        print("URL = https://wbchpaaspoc.service-now.com/nav_to.do?uri=change_request.do?sys_id=" +
+              response.json()['result']['sys_id'] + "&sysparm_view=itsm_process")
+
+        return response.json()
+    else:
+        raise SyntaxError
 
 
 def close_servicenow_change(configuration_data, sys_id, apply_results):
     data = {
         "close_code": "successful",
         "close_notes": apply_results,
-        "state": 3
+        "state": 3  # Closed Status
     }
 
     response = requests.patch(
@@ -55,4 +62,12 @@ def close_servicenow_change(configuration_data, sys_id, apply_results):
         data=json.dumps(data)
     )
 
-    print(response.json())
+
+    if str(response.status_code).startswith("2"):
+        print("Change '" + response.json()['result']['number'] + "' successfully closed")
+        print("URL = https://wbchpaaspoc.service-now.com/nav_to.do?uri=change_request.do?sys_id=" +
+              response.json()['result']['sys_id'] + "&sysparm_view=itsm_process")
+
+        return response.json()
+    else:
+        raise SyntaxError

@@ -181,10 +181,13 @@ class TFDeploymentInfoGenerator:
         env = jinja2.Environment(loader=jinja2.PackageLoader('tfe2_pipeline_wrapper', 'templates'))
 
         with open(os.path.join(destination, "meta.tf"), "wb") as fh:
-            print("Generating Meta File")
-            fh.write(env.get_template("deployment_meta.tf.template").render(
+            print("Generating Meta File:")
+            meta_file = env.get_template("deployment_meta.tf.template").render(
                 job=job,
                 app=self._application_information_for_template(),
                 provider_list=provider_list
-            ).encode())
+            )
+            print(meta_file)
+
+            fh.write(meta_file.encode())
 

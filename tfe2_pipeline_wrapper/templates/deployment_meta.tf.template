@@ -29,7 +29,11 @@ variable "azurerm_client_secret" {
 }
 
 locals {
-    resource_group_name = "{{provider_list.azure.resource_group_name}}"
+    azure_resource_group_name = "{{provider_list.azure.resource_group_name}}"
+    azure_subnet_data_id = "{{provider_list.azure.subnet_data_id}}"
+    azure_subnet_public_id = "{{provider_list.azure.subnet_public_id}}"
+    azure_subnet_private_id = "{{provider_list.azure.subnet_private_id}}"
+    azure_location = "{{provider_list.azure.location}}"
 }
 
 provider "azurerm" {
@@ -39,6 +43,7 @@ provider "azurerm" {
     client_id = "{{provider_list.azure.client_id}}"
     client_secret = "${var.azurerm_client_secret}"
 }
+
 {% endif %}{% if provider_list.aws %}
 ##############################################################
 ## AWS Provider
