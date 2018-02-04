@@ -46,6 +46,9 @@ class ConsulApplicationDeploymentKeys:
             'resource_group_name': self.consul_client.get_consul_key(self.base_environment_key + "azure/resource_group_name"),
             'subscription_id': self.consul_client.get_consul_key(subscription_key + "subscription_id"),
             'tenant_id': self.consul_client.get_consul_key(subscription_key + "tenant_id"),
+            'subnet_data_id': self.consul_client.get_consul_key(subscription_key + "subnets/data"),
+            'subnet_public_id': self.consul_client.get_consul_key(subscription_key + "subnets/public"),
+            'subnet_private_id': self.consul_client.get_consul_key(subscription_key + "subnets/private"),
         }
 
     def get_terraform_tenant(self):
